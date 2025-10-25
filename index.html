@@ -1,0 +1,289 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Bon anniversaire Lili 🎉</title>
+  <style>
+    :root{
+      --bg:#0f1724;
+      --card:#0b1220cc;
+      --accent:#ff5ca8;
+      --text:#fff;
+    }
+    html,body{
+      height:100%;
+      margin:0;
+      font-family:"Poppins",system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial;
+      background: radial-gradient(1200px 600px at 10% 20%, #10203a 0%, transparent 20%),
+                  radial-gradient(1200px 600px at 90% 80%, #1a0f2a 0%, transparent 15%),
+                  var(--bg);
+      color:var(--text);
+      overflow:hidden;
+      -webkit-font-smoothing:antialiased;
+      -moz-osx-font-smoothing:grayscale;
+    }
+
+    .center {
+      position:absolute;
+      left:50%;
+      top:50%;
+      transform:translate(-50%,-50%);
+      width:min(920px,92%);
+      text-align:center;
+      padding:28px;
+      border-radius:18px;
+      background:linear-gradient(180deg,rgba(255,255,255,0.03),rgba(255,255,255,0.01));
+      box-shadow:0 10px 30px rgba(2,6,23,0.6),inset 0 1px 0 rgba(255,255,255,0.02);
+      backdrop-filter:blur(6px);
+      border:1px solid rgba(255,255,255,0.03);
+    }
+
+    h1{
+      margin:6px 0;
+      font-size:clamp(28px,6vw,56px);
+      letter-spacing:-1px;
+      font-weight:700;
+      text-shadow:0 6px 20px rgba(0,0,0,0.6);
+    }
+
+    p.lead{
+      margin:0 0 18px;
+      opacity:0.9;
+      font-size:clamp(14px,2.2vw,18px);
+    }
+
+    .controls{
+      display:flex;
+      gap:12px;
+      justify-content:center;
+      flex-wrap:wrap;
+      margin-top:14px;
+    }
+
+    button{
+      background:linear-gradient(180deg,var(--accent),#d13f8f);
+      color:white;
+      border:0;
+      padding:12px 18px;
+      font-size:16px;
+      border-radius:10px;
+      cursor:pointer;
+      box-shadow:0 6px 16px rgba(80,20,60,0.25);
+      transition:transform .12s ease,box-shadow .12s ease,opacity .12s;
+    }
+    button:active{transform:translateY(1px) scale(.995);}
+    .btn-ghost{
+      background:transparent;
+      border:1px solid rgba(255,255,255,0.08);
+      color:var(--text);
+      box-shadow:none;
+    }
+
+    .hint{margin-top:10px;font-size:13px;opacity:0.7;}
+
+    canvas#confetti,canvas#balloons{
+      position:fixed;
+      left:0;top:0;
+      width:100%;
+      height:100%;
+      pointer-events:none;
+      z-index:0;
+    }
+
+    .cake{font-size:18px;display:inline-block;margin-right:10px;transform:translateY(2px);}
+    .credit{font-size:12px;color:rgba(255,255,255,0.5);margin-top:10px;}
+  </style>
+</head>
+<body>
+  <canvas id="confetti"></canvas>
+  <canvas id="balloons"></canvas>
+
+  <main class="center" style="z-index:2;position:relative;">
+    <div style="display:flex;align-items:center;justify-content:center;">
+      <div class="cake" aria-hidden>🎂</div>
+      <h1>Bon anniversaire <span style="color:var(--accent)">Lili</span> !</h1>
+    </div>
+    <p class="lead">Que ta journée soit pleine de rires, de sucreries et de jolis souvenirs.</p>
+
+    <div class="controls">
+      <button id="btnConfetti">Lancer les confettis 🎉</button>
+      <button id="btnBalloons" class="btn-ghost">Envoyer des ballons 🎈</button>
+      <button id="btnSurprise">Surprise sonore 🔔</button>
+      <button id="btnToggleText" class="btn-ghost">Changer le message ✍️</button>
+    </div>
+
+    <div class="hint">Clique sur les boutons pour déclencher des animations — appuie plusieurs fois pour plus d'effet.</div>
+    <div class="credit">Fait avec attention — copie ce fichier pour l'envoyer à Lili</div>
+  </main>
+
+  <script>
+    const confettiCanvas = document.getElementById('confetti');
+    const cctx = confettiCanvas.getContext('2d');
+    let confettiPieces = [];
+    const balloonsCanvas = document.getElementById('balloons');
+    const bctx = balloonsCanvas.getContext('2d');
+    let balloons = [];
+
+    function resizeCanvas(){
+      confettiCanvas.width = innerWidth;
+      confettiCanvas.height = innerHeight;
+      balloonsCanvas.width = innerWidth;
+      balloonsCanvas.height = innerHeight;
+    }
+    window.addEventListener('resize', resizeCanvas, {passive:true});
+    function rand(min,max){return Math.random()*(max-min)+min;}
+
+    class Confetti{
+      constructor(x,y){
+        this.x=x;this.y=y;
+        this.w=rand(6,12);this.h=rand(8,14);
+        this.rotation=rand(0,Math.PI*2);
+        this.vx=rand(-2,2);this.vy=rand(1,5);
+        this.vr=rand(-0.12,0.12);
+        this.color=["#FFD166","#EF476F","#06D6A0","#118AB2","#FFB6C1","#F9C74F"][Math.floor(rand(0,6))];
+        this.tilt=rand(-0.5,0.5);
+        this.opacity=rand(.85,1);
+      }
+      update(){
+        this.vy+=0.04;
+        this.x+=this.vx;
+        this.y+=this.vy;
+        this.rotation+=this.vr;
+        this.tilt+=Math.sin(this.rotation)*0.02;
+        if(this.y>confettiCanvas.height+30)this.y=confettiCanvas.height+100;
+      }
+      draw(ctx){
+        ctx.save();
+        ctx.translate(this.x,this.y);
+        ctx.rotate(this.rotation);
+        ctx.globalAlpha=this.opacity;
+        ctx.fillStyle=this.color;
+        ctx.fillRect(-this.w/2,-this.h/2+this.tilt*6,this.w,this.h);
+        ctx.restore();
+      }
+    }
+    function spawnConfetti(x,y,amount=40){
+      for(let i=0;i<amount;i++){
+        const p=new Confetti(x+rand(-30,30),y+rand(-30,30));
+        p.vx+=rand(-6,6);
+        p.vy+=rand(-8,-2);
+        confettiPieces.push(p);
+      }
+    }
+
+    class Balloon{
+      constructor(x,y,color){
+        this.x=x;this.y=y;this.r=rand(18,34);
+        this.color=color||`hsl(${rand(0,360)},70%,60%)`;
+        this.vy=rand(-1.4,-0.6);
+        this.vx=rand(-0.6,0.6);
+        this.phase=rand(0,Math.PI*2);
+      }
+      update(){
+        this.y+=this.vy;
+        this.x+=Math.sin(this.phase+performance.now()/1000)*0.4+this.vx;
+        this.phase+=0.01;
+      }
+      draw(ctx){
+        ctx.beginPath();
+        ctx.ellipse(this.x,this.y,this.r*0.85,this.r,0,0,Math.PI*2);
+        ctx.fillStyle=this.color;
+        ctx.fill();
+        ctx.beginPath();
+        ctx.ellipse(this.x-this.r*0.25,this.y-this.r*0.35,this.r*0.18,this.r*0.12,0,0,Math.PI*2);
+        ctx.fillStyle="rgba(255,255,255,0.45)";
+        ctx.fill();
+        ctx.beginPath();
+        ctx.moveTo(this.x,this.y+this.r);
+        ctx.quadraticCurveTo(this.x+6,this.y+this.r+18,this.x-4,this.y+this.r+34);
+        ctx.strokeStyle="rgba(255,255,255,0.35)";
+        ctx.lineWidth=1.4;
+        ctx.stroke();
+      }
+    }
+    function spawnBalloons(count=6){
+      for(let i=0;i<count;i++){
+        balloons.push(new Balloon(rand(60,innerWidth-60),innerHeight+rand(20,160)));
+      }
+    }
+
+    function loop(){
+      cctx.clearRect(0,0,confettiCanvas.width,confettiCanvas.height);
+      for(let i=confettiPieces.length-1;i>=0;i--){
+        const p=confettiPieces[i];
+        p.update();
+        p.draw(cctx);
+        if(p.y>confettiCanvas.height+200)confettiPieces.splice(i,1);
+      }
+      bctx.clearRect(0,0,balloonsCanvas.width,balloonsCanvas.height);
+      for(let i=balloons.length-1;i>=0;i--){
+        const b=balloons[i];
+        b.update();
+        b.draw(bctx);
+        if(b.y+b.r<-50)balloons.splice(i,1);
+      }
+      requestAnimationFrame(loop);
+    }
+
+    function playSurprise(){
+      try{
+        const ctx=new(window.AudioContext||window.webkitAudioContext)();
+        const o=ctx.createOscillator();
+        const g=ctx.createGain();
+        o.type="sine";
+        o.frequency.setValueAtTime(880,ctx.currentTime);
+        o.connect(g);g.connect(ctx.destination);
+        g.gain.value=0;
+        g.gain.linearRampToValueAtTime(0.12,ctx.currentTime+0.01);
+        o.start();
+        const now=ctx.currentTime;
+        const seq=[880,988,1318,1760];
+        seq.forEach((f,i)=>{
+          o.frequency.setValueAtTime(f,now+i*0.12);
+        });
+        g.gain.exponentialRampToValueAtTime(0.0001,now+seq.length*0.12+0.18);
+        o.stop(now+seq.length*0.12+0.2);
+      }catch(e){
+        console.warn("Audio non supporté",e);
+      }
+    }
+
+    document.getElementById('btnConfetti').addEventListener('click',()=>{
+      spawnConfetti(innerWidth/2,innerHeight/3,140);
+      spawnConfetti(innerWidth/2-200,innerHeight/2,70);
+      spawnConfetti(innerWidth/2+160,innerHeight/2,70);
+    });
+    document.getElementById('btnBalloons').addEventListener('click',()=>{
+      spawnBalloons(8);
+      spawnConfetti(rand(100,innerWidth-100),innerHeight-60,30);
+    });
+    document.getElementById('btnSurprise').addEventListener('click',()=>{
+      playSurprise();
+      spawnConfetti(innerWidth/2,innerHeight/2,80);
+      spawnBalloons(10);
+    });
+    document.getElementById('btnToggleText').addEventListener('click',()=>{
+      const h=document.querySelector('h1');
+      const variants=[
+        'Bon anniversaire Lili !',
+        'Joyeux anniversaire Lili 🎂',
+        'Happy B-day Lili ✨',
+        'Fête toi bien Lili !'
+      ];
+      const cur=h.textContent.trim();
+      let nextIndex=variants.indexOf(cur)+1;
+      if(nextIndex<=0||nextIndex>=variants.length)nextIndex=0;
+      h.innerHTML=variants[nextIndex].replace('Lili','<span style="color:var(--accent)">Lili</span>');
+      spawnConfetti(innerWidth/2,innerHeight/2,40);
+    });
+
+    resizeCanvas();
+    loop();
+
+    window.addEventListener('click',(e)=>{
+      spawnConfetti(e.clientX,e.clientY,24);
+    },{passive:true});
+  </script>
+</body>
+</html>
